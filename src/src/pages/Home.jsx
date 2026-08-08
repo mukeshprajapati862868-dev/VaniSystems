@@ -50,8 +50,9 @@ import HeroSection from "../components/home/HeroSection.jsx";
 import WelcomeSection from "../components/home/WelcomeSection.jsx";
 import ServicesHeading from "../components/home/ServicesHeading.jsx";
 import ClientsSection from "../components/home/ClientsSection.jsx";
-import EventsPhotos from "../components/home/EventsPhotos.jsx";
+// import EventsPhotos from "../components/home/EventsPhotos.jsx";
 import Products from "./Products";
+import PhotoGallery from "./PhotoGallery.jsx";
 
 const Home = () => {
   return (
@@ -61,16 +62,12 @@ const Home = () => {
       <WelcomeSection />
       <ServicesHeading />
       <ClientsSection />
-      <EventsPhotos/>
-      <EventsPhotos />
-
-      {/* Products Section */}
-      {/* <Products /> */}
+      <PhotoGallery/>
+      {/* <EventsPhotos /> */}
     </>
   );
 };
 
 export default Home;
-
 
 
