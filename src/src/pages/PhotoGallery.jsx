@@ -33,7 +33,7 @@ const PhotoGallery = () => {
                 {/* Responsive image card */}
 
                 <div
-                  className="card border-0 shadow-sm h-100 overflow-hidden"
+                  className="card border-0 shadow-sm h-50 overflow-hidden"
                   style={{
                     borderRadius: "2px",
                   }}
