@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaEdit, FaTrash, FaPlus, FaCopy, FaCheck } from "react-icons/fa";
 
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = "https://onrender.com/api";
 
 const getHeaders = () => ({
   "Content-Type": "application/json",
