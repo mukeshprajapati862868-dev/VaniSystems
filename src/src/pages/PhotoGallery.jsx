@@ -1,4 +1,4 @@
-```jsx
+
 import React, { useEffect, useState } from "react";
 
 // Gallery Context se images receive karta hai
@@ -352,4 +352,4 @@ const PhotoGallery = () => {
 
 // PhotoGallery ko export karta hai
 export default PhotoGallery;
-```
+
