@@ -10,6 +10,7 @@ const PhotoGallery = () => {
 
   return (
     <section className="py-2">
+      <h1>||Event images||</h1>
       <div className="container">
         {/* Responsive gallery row */}
 
