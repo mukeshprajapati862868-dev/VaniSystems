@@ -212,6 +212,7 @@
 // };
 
 // export default Cart;
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaTrash, FaPlus, FaMinus, FaDownload } from "react-icons/fa";
