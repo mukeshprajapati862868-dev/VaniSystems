@@ -16,7 +16,7 @@ const TopBar = () => {
 
   // ================= WHATSAPP CONFIGURATION =================
 
-  const whatsappNumber = "919889075000";
+  const whatsappNumber = "91 6307058567";
 
   const whatsappMessage =
     "Hello Vani Systems Pvt. Ltd., I want to know more about your services. Please help me.";
@@ -87,7 +87,7 @@ const TopBar = () => {
                   <FaWhatsapp className="text-success fs-5" />
 
                   <span>
-                    WhatsApp 98890 75000
+                    WhatsApp 63070 58567
                   </span>
 
                 </a>
@@ -103,7 +103,7 @@ const TopBar = () => {
                   <FaEnvelope className="text-warning fs-5" />
 
                   <span>
-                    info@vanisystems.com
+                    vanisystems2003@yahoo.co.in
                   </span>
 
                 </a>
@@ -313,7 +313,7 @@ const TopBar = () => {
                     href="mailto:info@vanisystems.com"
                     className="text-secondary small text-decoration-none"
                   >
-                    Info@vanisystems.com
+                     vanisystems2003@yahoo.co.in
                   </a>
 
                 </div>
