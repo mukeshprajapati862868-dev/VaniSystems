@@ -12,19 +12,19 @@ const slides = [
   },
   {
     image:
-      "https://vanisystems.in/MediaGallery/558479939.jpg",
+      "https://www.shutterstock.com/image-vector/banner-website-development-laptop-template-260nw-2187936595.jpg",
     title: "Professional Services",
     subtitle: "Excellence, Trust & Commitment",
   },
   {
     image:
-      "https://vanisystems.in/MediaGallery/1805550107.jpg",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQOwydd3xaD22kzSoGaij2rR6Mfd1mkNyWNpw&s",
     title: "Trusted Business Partner",
     subtitle: "Delivering Quality Services Across Industries",
   },
   {
     image:
-      "https://vanisystems.in/MediaGallery/1805550107.jpg",
+      "https://plus.unsplash.com/premium_photo-1674641194949-e154719cdc02?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8c2xpZGVyfGVufDB8fDB8fHww",
     title: "Our Strength Is Our Team",
     subtitle: "Building Success Through Professional Excellence",
   },
