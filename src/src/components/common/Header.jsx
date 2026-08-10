@@ -71,8 +71,7 @@ const Header = () => {
 
               <ul className="dropdown-menu shadow-lg border-0 rounded-0 mt-2">
 
-                {[
-                  ["Profiles", "/profile"],
+                {[              
                   ["Milestones", "/milestones"],
                   ["Our Team", "/team"],
                   ["Employee List", "/employee-list"],
