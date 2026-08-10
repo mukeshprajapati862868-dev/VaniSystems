@@ -45,6 +45,7 @@ const PhotoGallery = () => {
       <div className="container">
         {/* Responsive gallery row */}
         <div className="row g-4">
+          <h1>|| Photo Galler ||</h1>
           {/* Agar koi image available nahi hai */}
           {galleryImages.length === 0 ? (
             <div className="col-12">
