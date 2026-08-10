@@ -5,7 +5,8 @@ import { FaCreditCard, FaTruck, FaCheckCircle, FaArrowLeft, FaBoxOpen } from "re
 // ============================================================================
 // PART 1: SERVICE ROUTING CONSTANTS & INITIAL STATE BLUEPRINT
 // ============================================================================
-const BASE_URL = 'http://localhost:5000/api';
+// const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL='https://vanisystemsb-1.onrender.com/api'
 
 class APIService {
   getHeaders() {
