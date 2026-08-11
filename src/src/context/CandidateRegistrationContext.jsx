@@ -4,7 +4,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-
+import apiService from "../services/apiService";
 
 // ======================================================
 // CANDIDATE REGISTRATION CONTEXT
@@ -32,60 +32,26 @@ export const CandidateRegistrationProvider = ({
 
 
   // ======================================================
-  // LOAD CANDIDATES FROM LOCAL STORAGE
+  // LOAD CANDIDATES FROM BACKEND API
   // ======================================================
 
   useEffect(() => {
-
-    try {
-
-      const savedCandidates =
-        localStorage.getItem(
-          "candidateRegistrations"
-        );
-
-
-      if (savedCandidates) {
-
-        setCandidates(
-          JSON.parse(savedCandidates)
-        );
-
-      } else {
-
+    const fetchCandidates = async () => {
+      try {
+        const result = await apiService.getCandidates();
+        if (result.success) {
+          setCandidates(result.data || []);
+        } else {
+          setCandidates([]);
+        }
+      } catch (error) {
+        console.error("Failed to load candidates from backend:", error);
         setCandidates([]);
-
       }
+    };
 
-    } catch (error) {
-
-      console.error(
-        "Candidate data load error:",
-        error
-      );
-
-      setCandidates([]);
-
-    }
-
+    fetchCandidates();
   }, []);
-
-
-  // ======================================================
-  // SAVE CANDIDATES TO LOCAL STORAGE
-  // ======================================================
-
-  useEffect(() => {
-
-    localStorage.setItem(
-
-      "candidateRegistrations",
-
-      JSON.stringify(candidates)
-
-    );
-
-  }, [candidates]);
 
 
   // ======================================================
@@ -170,65 +136,21 @@ export const CandidateRegistrationProvider = ({
   // ADD NEW CANDIDATE
   // ======================================================
 
-  const addCandidate = (candidateData) => {
+  const addCandidate = async (candidateData) => {
+    const formData = new FormData();
+    Object.entries(candidateData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, value);
+      }
+    });
 
-    const uniqueId =
-      generateUniqueId();
-
-
-    const uniqueRegistrationNumber =
-      generateRegistrationNumber();
-
-
-    const newCandidate = {
-
-      // Unique candidate ID
-      id: uniqueId,
-
-
-      // Registration number
-      registrationNumber:
-        uniqueRegistrationNumber,
-
-
-      // Candidate form data
-      ...candidateData,
-
-
-      // Default payment status
-      paymentStatus: "Unpaid",
-
-
-      // Registration date
-      registrationDate:
-
-        new Date().toLocaleDateString(
-          "en-IN"
-        ),
-
-
-      // Exact creation time
-      createdAt:
-        new Date().toISOString(),
-
-    };
-
-
-    setCandidates(
-
-      (previousCandidates) => [
-
-        ...previousCandidates,
-
-        newCandidate,
-
-      ]
-
-    );
-
-
-    return newCandidate;
-
+    const result = await apiService.registerCandidate(formData);
+    if (result.success) {
+      const savedCandidate = result.data;
+      setCandidates((previousCandidates) => [savedCandidate, ...previousCandidates]);
+      return savedCandidate;
+    }
+    throw new Error(result.error || "Failed to save candidate");
   };
 
 
@@ -236,22 +158,19 @@ export const CandidateRegistrationProvider = ({
   // DELETE CANDIDATE
   // ======================================================
 
-  const deleteCandidate = (id) => {
-
-    setCandidates(
-
-      (previousCandidates) =>
-
-        previousCandidates.filter(
-
-          (candidate) =>
-
-            candidate.id !== id
-
-        )
-
-    );
-
+  const deleteCandidate = async (id) => {
+    try {
+      await apiService.deleteCandidate(id);
+      setCandidates(
+        (previousCandidates) =>
+          previousCandidates.filter(
+            (candidate) =>
+              candidate._id !== id && candidate.id !== id
+          )
+      );
+    } catch (error) {
+      console.error("Delete candidate failed:", error);
+    }
   };
 
 
@@ -259,39 +178,27 @@ export const CandidateRegistrationProvider = ({
   // UPDATE PAYMENT STATUS
   // ======================================================
 
-  const updatePaymentStatus = (
-
+  const updatePaymentStatus = async (
     id,
-
     status
-
   ) => {
-
-    setCandidates(
-
-      (previousCandidates) =>
-
-        previousCandidates.map(
-
-          (candidate) =>
-
-            candidate.id === id
-
-              ? {
-
-                ...candidate,
-
-                paymentStatus:
-                  status,
-
-              }
-
-              : candidate
-
-        )
-
-    );
-
+    try {
+      const result = await apiService.updateCandidatePaymentStatus(id, status);
+      if (result.success) {
+        const updatedCandidate = result.data;
+        setCandidates(
+          (previousCandidates) =>
+            previousCandidates.map(
+              (candidate) =>
+                (candidate._id === id || candidate.id === id)
+                  ? updatedCandidate
+                  : candidate
+            )
+        );
+      }
+    } catch (error) {
+      console.error("Update payment status failed:", error);
+    }
   };
 
 
