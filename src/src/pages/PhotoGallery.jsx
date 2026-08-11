@@ -1,244 +1,121 @@
-// import React from "react";
+import React, { useEffect, useRef } from "react";
 
-// // Gallery Context se images receive karta hai
-// import { useGallery } from "../context/GalleryContext";
-
-// // Photo Gallery Component
-// const PhotoGallery = () => {
-//   // Context se live gallery images leta hai
-//   const { galleryImages } = useGallery();
-
-//   return (
-//     <section className="py-5 bg-light">
-//       {/* Hover effects ke liye inline dynamic styles inject kiye hain */}
-//       <style>{`
-//         .gallery-card {
-//           transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
-//           cursor: pointer;
-//         }
-//         .gallery-card:hover {
-//           transform: translateY(-8px);
-//           box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
-//         }
-//         .img-wrapper img {
-//           transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-//         }
-//         .gallery-card:hover .img-wrapper img {
-//           transform: scale(1.08);
-//         }
-//         .hover-overlay {
-//           position: absolute;
-//           top: 0;
-//           left: 0;
-//           width: 100%;
-//           height: 100%;
-//           background: linear-gradient(to bottom, rgba(0,0,0,0) 40%, rgba(0,0,0,0.4) 100%);
-//           opacity: 0;
-//           transition: opacity 0.4s ease;
-//           pointer-events: none;
-//         }
-//         .gallery-card:hover .hover-overlay {
-//           opacity: 1;
-//         }
-//       `}</style>
-
-//       <div className="container">
-//         {/* Responsive gallery row */}
-//         <div className="row g-4">
-//           <h1>|| Photo Galler ||</h1>
-//           {/* Agar koi image available nahi hai */}
-//           {galleryImages.length === 0 ? (
-//             <div className="col-12">
-//               <div className="text-center py-5">
-//                 <h4 className="text-muted fw-light">No Photos Available</h4>
-//               </div>
-//             </div>
-//           ) : (
-//             /* Gallery images ko dynamically show karta hai */
-//             galleryImages.map((image) => (
-//               <div
-//                 className="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3"
-//                 key={image.id}
-//               >
-//                 {/* Modern responsive image card with styling */}
-//                 <div
-//                   className="card gallery-card border-0 shadow-sm h-100 overflow-hidden position-relative"
-//                   style={{
-//                     borderRadius: "12px",
-//                   }}
-//                 >
-//                   {/* Image wrapper */}
-//                   <div
-//                     className="img-wrapper"
-//                     style={{
-//                       width: "100%",
-//                       height: "280px",
-//                       overflow: "hidden",
-//                       position: "relative",
-//                     }}
-//                   >
-//                     {/* Sirf image show hogi */}
-//                     <img
-//                       src={image.url}
-//                       alt="Gallery Image"
-//                       className="w-100 h-100"
-//                       style={{
-//                         objectFit: "cover",
-//                         display: "block",
-//                       }}
-//                     />
-                    
-//                     {/* Hover karne par aane wala soft dark overlay gradient */}
-//                     <div className="hover-overlay" />
-//                   </div>
-//                 </div>
-//               </div>
-//             ))
-//           )}
-//         </div>
-//       </div>
-//     </section>
-//   );
-// };
-
-// // PhotoGallery ko export karta hai
-// export default PhotoGallery;
-
-
-// ==============================
-// PhotoGallery.jsx
-// ==============================
-
-import React from "react";
+// Gallery Context se images receive karta hai
 import { useGallery } from "../context/GalleryContext";
 
 const PhotoGallery = () => {
-  // Sirf gallery images receive hongi.
-  // Delete function yahan intentionally use nahi kiya gaya.
   const { galleryImages } = useGallery();
+  const scrollContainerRef = useRef(null);
+
+  // 5 Second Automatic Scroll Engine
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || galleryImages.length === 0) return;
+
+    const autoScroll = setInterval(() => {
+      // Har scroll par single card width + gap jitna aage scroll hoga
+      const cardWidth = container.clientWidth / (window.innerWidth < 576 ? 1 : window.innerWidth < 768 ? 2 : window.innerWidth < 992 ? 3 : 4);
+      
+      if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) {
+        // Agar aakhri image par pohoch jaye toh wapas start (0) par aa jaye
+        container.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        container.scrollBy({ left: cardWidth, behavior: "smooth" });
+      }
+    }, 5000); // 5 Seconds Interval
+
+    return () => clearInterval(autoScroll);
+  }, [galleryImages]);
 
   return (
-    <>
-      <style>
-        {`
-          .gallery-card {
-            transition:
-              transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.4s ease;
-            cursor: pointer;
-          }
-
-          .gallery-card:hover {
-            transform: translateY(-8px);
-            box-shadow:
-              0 12px 30px rgba(0, 0, 0, 0.15) !important;
-          }
-
-          .img-wrapper img {
-            transition:
-              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-          }
-
-          .gallery-card:hover .img-wrapper img {
-            transform: scale(1.08);
-          }
-
-          .hover-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:
-              linear-gradient(
-                to bottom,
-                rgba(0, 0, 0, 0) 40%,
-                rgba(0, 0, 0, 0.4) 100%
-              );
-            opacity: 0;
-            transition: opacity 0.4s ease;
-            pointer-events: none;
-          }
-
-          .gallery-card:hover .hover-overlay {
-            opacity: 1;
-          }
-        `}
-      </style>
-
-      <section className="py-5">
-        <div className="container">
-          <div className="row g-4">
-
-            <div className="col-12">
-              <h1>Photo Gallery</h1>
-            </div>
-
-            {galleryImages.length === 0 ? (
-              <div className="col-12">
-                <div className="text-center py-5">
-                  <h4 className="text-muted fw-light">
-                    No Photos Available
-                  </h4>
-                </div>
-              </div>
-            ) : (
-              galleryImages.map((image, index) => (
-                <div
-                  className="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3"
-                  key={image.id || image._id || index}
-                >
-                  <div
-                    className="card gallery-card border-0 shadow-sm h-100 overflow-hidden position-relative"
-                    style={{
-                      borderRadius: "12px",
-                    }}
-                  >
-                    <div
-                      className="img-wrapper"
-                      style={{
-                        width: "100%",
-                        height: "280px",
-                        overflow: "hidden",
-                        position: "relative",
-                      }}
-                    >
-                      <img
-                        src={image.url}
-                        alt={
-                          image.name ||
-                          `Gallery Image ${index + 1}`
-                        }
-                        className="w-100 h-100"
-                        loading="lazy"
-                        draggable="false"
-                        style={{
-                          objectFit: "cover",
-                          display: "block",
-                        }}
-                      />
-
-                      <div className="hover-overlay" />
-                    </div>
-                  </div>
-                </div>
-              ))
+    <section className="py-4 py-md-5 bg-light">
+      <div className="container-fluid container-xxl px-3 px-sm-4">
+        
+        {/* PHOTO GALLERY TITLE HEADING */}
+        <div className="row mb-4 mb-md-5">
+          <div className="col-12 text-start">
+            <h1 className="fw-bold text-dark mb-2" style={{ letterSpacing: "-0.5px", fontSize: "calc(1.6rem + 1vw)" }}>
+              Photo Gallery
+            </h1>
+            <div className="bg-primary rounded" style={{ width: "50px", height: "4px" }}></div>
+            {galleryImages.length > 0 && (
+              <p className="text-muted small mt-2 mb-0 fw-medium">
+                Showing {galleryImages.length} beautiful memories
+              </p>
             )}
-
           </div>
         </div>
-      </section>
-    </>
+
+        {/* Horizontal Scroll Layout */}
+        {galleryImages.length === 0 ? (
+          <div className="text-center py-5 bg-white rounded shadow-sm border border-dashed">
+            <h5 className="text-muted fw-normal mb-0">No Photos Available</h5>
+          </div>
+        ) : (
+          <div 
+            ref={scrollContainerRef}
+            className="d-flex g-3 g-md-4 overflow-x-auto pb-3"
+            style={{ 
+              scrollSnapType: "x mandatory", 
+              scrollbarWidth: "none", // Hide scrollbar for clean UI
+              msOverflowStyle: "none"
+            }}
+          >
+            {galleryImages.map((image) => (
+              <div 
+                className="flex-shrink-0" 
+                key={image.id}
+                style={{ 
+                  width: "calc(100% / var(--bs-columns, 4))",
+                  scrollSnapAlign: "start",
+                  // CSS variables for responsive widths inside flex container
+                  "--bs-columns": window.innerWidth < 576 ? 1 : window.innerWidth < 768 ? 2 : window.innerWidth < 992 ? 3 : 4,
+                  paddingRight: "1.5rem"
+                }}
+              >
+                <div
+                  className="card border-0 shadow-sm h-100 overflow-hidden"
+                  style={{
+                    borderRadius: "6px",
+                    backgroundColor: "#fff",
+                    transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.12)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 .125rem .25rem rgba(0,0,0,0.075)";
+                  }}
+                >
+                  <div style={{ width: "100%", height: "0", paddingBottom: "75%", position: "relative", overflow: "hidden" }}>
+                    <img
+                      src={image.url}
+                      alt="Gallery Image"
+                      crossOrigin="anonymous"
+                      className="w-100 h-100"
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        objectFit: "cover",
+                        display: "block",
+                        cursor: "pointer",
+                        transition: "transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.06)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 };
 
 export default PhotoGallery;
-
-
-
-
-
-
-
-
-
