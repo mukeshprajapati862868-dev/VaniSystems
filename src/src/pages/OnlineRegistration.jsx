@@ -462,7 +462,7 @@ const OnlineRegistration = () => {
   //
   // ======================================================
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
 
 
     // --------------------------------------------------
@@ -580,8 +580,15 @@ const OnlineRegistration = () => {
     // CONTEXT ME SAVE
     // ==================================================
 
-    const savedCandidate =
-      addCandidate(candidateData);
+    let savedCandidate;
+
+    try {
+      savedCandidate = await addCandidate(candidateData);
+    } catch (error) {
+      console.error("Candidate registration failed:", error);
+      alert(error.message || "Failed to submit registration.");
+      return;
+    }
 
 
     // ==================================================
