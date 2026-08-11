@@ -40,6 +40,67 @@ class APIService {
     return data;
   }
 
+
+
+
+
+
+    // ==================== CANDIDATES ENDPOINTS (FULLY CORRECTED) ====================
+
+  /**
+   * Register a new candidate (Accepts FormData)
+   */
+  async registerCandidate(candidateData) {
+    const token = localStorage.getItem('token');
+    const multiHeaders = {};
+    if (token) {
+      multiHeaders['Authorization'] = `Bearer ${token}`;
+    }
+
+    // FIX: Removed incorrect '/register' path to match backend server router mappings
+    const response = await fetch(`${BASE_URL}/candidates`, {
+      method: 'POST',
+      headers: multiHeaders,
+      body: candidateData
+    });
+    return this.handleResponse(response);
+  }
+
+  /**
+   * Fetch all registered candidates
+   */
+  async getCandidates() {
+    const response = await fetch(`${BASE_URL}/candidates`, {
+      method: 'GET',
+      headers: this.getHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  /**
+   * Delete candidate record by structure ID
+   */
+  async deleteCandidate(candidateId) {
+    const response = await fetch(`${BASE_URL}/candidates/${candidateId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  /**
+   * Update candidate payment workflow status flags
+   */
+  async updateCandidatePaymentStatus(candidateId, paymentStatus) {
+    // FIX: Updated endpoint path and method to PATCH to perfectly mirror backend routing logic
+    const response = await fetch(`${BASE_URL}/candidates/${candidateId}/payment`, {
+      method: 'PATCH',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ status: paymentStatus })
+    });
+    return this.handleResponse(response);
+  }
+
   // ==================== AUTH ENDPOINTS ====================
 
   /**
