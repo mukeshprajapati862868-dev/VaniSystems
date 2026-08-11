@@ -44,30 +44,31 @@ class APIService {
 
 
 
-
-    // ==================== CANDIDATES ENDPOINTS (FULLY CORRECTED) ====================
+  // ==================== CANDIDATES ENDPOINTS (PERFECT MATCH WITH BACKEND) ====================
 
   /**
    * Register a new candidate (Accepts FormData)
+   * MATCHES BACKEND: POST /api/candidates/register
    */
-  async registerCandidate(candidateData) {
+  async registerCandidate(formData) {
     const token = localStorage.getItem('token');
     const multiHeaders = {};
     if (token) {
       multiHeaders['Authorization'] = `Bearer ${token}`;
     }
 
-    // FIX: Removed incorrect '/register' path to match backend server router mappings
-    const response = await fetch(`${BASE_URL}/candidates`, {
+    // FIXED: Appended '/register' to match router.post('/register') on backend
+    const response = await fetch(`${BASE_URL}/candidates/register`, {
       method: 'POST',
       headers: multiHeaders,
-      body: candidateData
+      body: formData
     });
     return this.handleResponse(response);
   }
 
   /**
    * Fetch all registered candidates
+   * MATCHES BACKEND: GET /api/candidates
    */
   async getCandidates() {
     const response = await fetch(`${BASE_URL}/candidates`, {
@@ -79,6 +80,7 @@ class APIService {
 
   /**
    * Delete candidate record by structure ID
+   * MATCHES BACKEND: DELETE /api/candidates/:id
    */
   async deleteCandidate(candidateId) {
     const response = await fetch(`${BASE_URL}/candidates/${candidateId}`, {
@@ -90,13 +92,14 @@ class APIService {
 
   /**
    * Update candidate payment workflow status flags
+   * MATCHES BACKEND: PUT /api/candidates/:id/payment-status
    */
   async updateCandidatePaymentStatus(candidateId, paymentStatus) {
-    // FIX: Updated endpoint path and method to PATCH to perfectly mirror backend routing logic
-    const response = await fetch(`${BASE_URL}/candidates/${candidateId}/payment`, {
-      method: 'PATCH',
+    // FIXED: Changed endpoint to '/payment-status' and method to 'PUT' to perfectly match backend routing
+    const response = await fetch(`${BASE_URL}/candidates/${candidateId}/payment-status`, {
+      method: 'PUT',
       headers: this.getHeaders(),
-      body: JSON.stringify({ status: paymentStatus })
+      body: JSON.stringify({ paymentStatus: paymentStatus }) // Fixed payload body structure keys
     });
     return this.handleResponse(response);
   }
