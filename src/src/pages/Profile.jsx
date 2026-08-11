@@ -18,7 +18,7 @@ const CouponsPanel = () => {
   const [copied, setCopied] = React.useState("");
 
   React.useEffect(() => {
-    fetch("http://localhost:5000/api/coupons/active", {
+    fetch("https://vanisystemsb-1.onrender.com/api/coupons/active", {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     })
       .then(r => r.json())
