@@ -4,11 +4,11 @@
  */
 
 // const BASE_URL = 'http://localhost:5000/api';
-// const BASE_URL='https://vanisystemsb-1.onrender.com';
+// const BASE_URL='https://api-rishabh.vanisystems.in';
 
 const BASE_URL =
   import.meta.env.VITE_API_URL ||
-  'https://vanisystemsb-1.onrender.com/api';
+  'https://api-rishabh.vanisystems.in/api';
 
 class APIService {
   // Helper method to get headers

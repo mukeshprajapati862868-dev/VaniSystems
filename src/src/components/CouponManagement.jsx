@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaEdit, FaTrash, FaPlus, FaCopy, FaCheck } from "react-icons/fa";
 
-const BASE_URL = "https://vanisystemsb-1.onrender.com/api";
+const BASE_URL = "https://api-rishabh.vanisystems.in/api";
 
 const getHeaders = () => ({
   "Content-Type": "application/json",

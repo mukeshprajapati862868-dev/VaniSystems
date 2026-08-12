@@ -5,7 +5,7 @@ import React, {
   useState,
 } from "react";
 
-const API_BASE_URL = 'https://vanisystemsb-1.onrender.com/api';
+const API_BASE_URL = 'https://api-rishabh.vanisystems.in/api';
 
 // Gallery ka global context create karta hai
 const GalleryContext = createContext();

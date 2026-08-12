@@ -18,7 +18,7 @@ const CouponsPanel = () => {
   const [copied, setCopied] = React.useState("");
 
   React.useEffect(() => {
-    fetch("https://vanisystemsb-1.onrender.com/api/coupons/active", {
+    fetch("https://api-rishabh.vanisystems.in/api/coupons/active", {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     })
       .then(r => r.json())
@@ -101,7 +101,7 @@ const ReturnsPanel = ({ orders }) => {
     setSubmitting(true);
     try {
       const res = await fetch(
-        `https://vanisystemsb-1.onrender.com/api/orders/${selectedOrder.orderId}/return`,
+        `https://api-rishabh.vanisystems.in/api/orders/${selectedOrder.orderId}/return`,
         {
           method: "PUT",
           headers: {
@@ -227,7 +227,7 @@ const PaymentHistory = () => {
   React.useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('https://vanisystemsb-1.onrender.com/api/payments', {
+        const res = await fetch('https://api-rishabh.vanisystems.in/api/payments', {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -296,7 +296,7 @@ const NotificationsPanel = () => {
 
   const load = async () => {
     try {
-      const res = await fetch('https://vanisystemsb-1.onrender.com/api/notifications', {
+      const res = await fetch('https://api-rishabh.vanisystems.in/api/notifications', {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -314,7 +314,7 @@ const NotificationsPanel = () => {
   React.useEffect(() => { load(); }, []);
 
   const markRead = async (id) => {
-    await fetch(`https://vanisystemsb-1.onrender.com/api/notifications/${id}/read`, {
+    await fetch(`https://api-rishabh.vanisystems.in/api/notifications/${id}/read`, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     });
@@ -322,7 +322,7 @@ const NotificationsPanel = () => {
   };
 
   const markAllRead = async () => {
-    await fetch('https://vanisystemsb-1.onrender.com/api/notifications/mark-all-read', {
+    await fetch('https://api-rishabh.vanisystems.in/api/notifications/mark-all-read', {
       method: 'PUT',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     });
@@ -330,7 +330,7 @@ const NotificationsPanel = () => {
   };
 
   const deleteNotif = async (id) => {
-    await fetch(`https://vanisystemsb-1.onrender.com/api/notifications/${id}`, {
+    await fetch(`https://api-rishabh.vanisystems.in/api/notifications/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     });
