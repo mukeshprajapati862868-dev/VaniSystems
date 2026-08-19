@@ -16,16 +16,16 @@ const TopBar = () => {
 
   // ================= WHATSAPP CONFIGURATION =================
 
-  const whatsappNumber = "91 6307058567";
+  const whatsappNumber = "916307058567";
 
   const whatsappMessage =
     "Hello Vani Systems Pvt. Ltd., I want to know more about your services. Please help me.";
 
-  // Direct WhatsApp Web chat URL
-  const whatsappUrl =
-    `https://web.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(
-      whatsappMessage
-    )}`;
+  // Direct WhatsApp chat URL
+  // Message will automatically appear in WhatsApp message box
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    whatsappMessage
+  )}`;
 
   return (
     <>
@@ -35,7 +35,6 @@ const TopBar = () => {
 
       <div className="bg-dark text-white">
         <div className="container-fluid px-3 px-lg-5 py-2">
-
           <div className="row align-items-center g-3">
 
             {/* ==================================================
@@ -43,19 +42,16 @@ const TopBar = () => {
             ================================================== */}
 
             <div className="col-12 col-lg-7">
-
               <div className="d-flex align-items-center justify-content-center justify-content-lg-start flex-wrap gap-3 gap-lg-4">
 
                 {/* ================= LOCATION ================= */}
 
                 <div className="d-flex align-items-center gap-2 text-nowrap">
-
                   <FaMapMarkerAlt className="text-warning fs-5" />
 
                   <span>
-                    New Berry Road Lucknow
+                    Paramount Apartment, 15, New Berry Road, Dalibagh Lucknow
                   </span>
-
                 </div>
 
                 {/* ================= PHONE ================= */}
@@ -65,13 +61,11 @@ const TopBar = () => {
                   className="text-white text-decoration-none d-flex align-items-center gap-2 text-nowrap"
                   title="Call Vani Systems"
                 >
-
                   <FaPhoneAlt className="text-warning fs-5" />
 
                   <span>
                     Phone 0522-2207400
                   </span>
-
                 </a>
 
                 {/* ================= WHATSAPP ================= */}
@@ -83,13 +77,11 @@ const TopBar = () => {
                   className="text-white text-decoration-none d-flex align-items-center gap-2 text-nowrap"
                   title="Chat with Vani Systems on WhatsApp"
                 >
-
                   <FaWhatsapp className="text-success fs-5" />
 
                   <span>
                     WhatsApp 63070 58567
                   </span>
-
                 </a>
 
                 {/* ================= EMAIL ================= */}
@@ -99,17 +91,13 @@ const TopBar = () => {
                   className="text-white text-decoration-none d-flex align-items-center gap-2 text-nowrap"
                   title="Send Email"
                 >
-
                   <FaEnvelope className="text-warning fs-5" />
 
                   <span>
                     vanisystems2003@yahoo.co.in
                   </span>
-
                 </a>
-
               </div>
-
             </div>
 
             {/* ==================================================
@@ -117,7 +105,6 @@ const TopBar = () => {
             ================================================== */}
 
             <div className="col-12 col-lg-5">
-
               <div className="d-flex align-items-center justify-content-center justify-content-lg-end gap-4">
 
                 {/* ================= EMP LOGIN / PROFILE ================= */}
@@ -130,13 +117,11 @@ const TopBar = () => {
                   }
                   className="text-white text-decoration-none"
                 >
-
                   <div className="text-center">
 
                     <FaUsers className="text-warning fs-5 mb-1" />
 
                     <div>
-
                       <span>
                         {isAuthenticated
                           ? "Profile"
@@ -150,11 +135,9 @@ const TopBar = () => {
                           ? "Page"
                           : "Login"}
                       </span>
-
                     </div>
 
                   </div>
-
                 </Link>
 
                 {/* ================= ADMIN LOGIN ================= */}
@@ -163,13 +146,11 @@ const TopBar = () => {
                   to="/admin-login"
                   className="text-white text-decoration-none"
                 >
-
                   <div className="text-center">
 
                     <FaUser className="text-warning fs-5 mb-1" />
 
                     <div>
-
                       <span>
                         Admin
                       </span>
@@ -179,11 +160,9 @@ const TopBar = () => {
                       <span>
                         Login
                       </span>
-
                     </div>
 
                   </div>
-
                 </Link>
 
                 {/* ================= SEARCH ================= */}
@@ -214,11 +193,9 @@ const TopBar = () => {
                 </div>
 
               </div>
-
             </div>
 
           </div>
-
         </div>
       </div>
 
@@ -313,7 +290,7 @@ const TopBar = () => {
                     href="mailto:info@vanisystems.com"
                     className="text-secondary small text-decoration-none"
                   >
-                     vanisystems2003@yahoo.co.in
+                    vanisystems2003@yahoo.co.in
                   </a>
 
                 </div>
