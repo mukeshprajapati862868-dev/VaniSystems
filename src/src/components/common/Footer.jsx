@@ -7,6 +7,7 @@ import {
   FaSkype,
   FaInstagram,
 } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   const [hoveredLink, setHoveredLink] = useState(null);
@@ -49,13 +50,11 @@ const Footer = () => {
             />
 
             <p className="mb-0 lh-lg">
-
               Vani Systems (P) Limited is Incorporated
               under Registrar of Companies Act
               1956. The Vani Systems is an ISO 9001-
               2008, ISO 27001:2013 certified private
               limited.
-
             </p>
 
           </div>
@@ -153,7 +152,6 @@ const Footer = () => {
                 "Refund and Cancellation policy",
                 "Advertisment",
                 "Emp Login",
-                "Admin Login",
               ].map((item, index) => (
 
                 <li key={item} className="mb-3">
@@ -175,6 +173,24 @@ const Footer = () => {
 
               ))}
 
+              {/* ================= ADMIN LOGIN ================= */}
+              <li className="mb-3">
+
+                <Link
+                  to="/admin-login"
+                  style={footerLinkStyle("admin-login")}
+                  onMouseEnter={() =>
+                    setHoveredLink("admin-login")
+                  }
+                  onMouseLeave={() =>
+                    setHoveredLink(null)
+                  }
+                >
+                  Admin Login
+                </Link>
+
+              </li>
+
             </ul>
 
           </div>
@@ -194,20 +210,20 @@ const Footer = () => {
 
           <div className="row align-items-center g-3">
 
-            {/* COPYRIGHT */}
+            {/* ================= COPYRIGHT ================= */}
             <div className="col-12 col-md-8 text-center text-md-start">
 
               <span>
                 Copyright @ 2018{" "}
                 <span className="text-warning fw-semibold">
-                  Vanisystems(P).Ltd.
+                  Vani Systems(P).Ltd.
                 </span>
                 , All Right Reserved
               </span>
 
             </div>
 
-            {/* SOCIAL ICONS */}
+            {/* ================= SOCIAL ICONS ================= */}
             <div className="col-12 col-md-4">
 
               <div className="d-flex justify-content-center justify-content-md-end gap-4">
