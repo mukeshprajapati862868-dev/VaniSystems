@@ -1,2083 +1,1021 @@
-import React, {
-  useState,
-} from "react";
-
-import {
-  useCandidateRegistration,
-} from "../context/CandidateRegistrationContext";
-
-
-// ======================================================
-// ONLINE REGISTRATION COMPONENT
-// ======================================================
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useCandidateRegistration } from "../context/CandidateRegistrationContext";
 
 const OnlineRegistration = () => {
-
-
-  // ======================================================
-  // CANDIDATE REGISTRATION CONTEXT
-  // ======================================================
-  //
-  // Context se candidate add karne ka function
-  // use kiya ja raha hai.
-  //
-  // ======================================================
-
-  const {
-    addCandidate,
-  } = useCandidateRegistration();
-
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { addCandidate } = useCandidateRegistration();
 
   // ======================================================
-  // FORM INITIAL DATA
+  // ADMIN FEES FROM NOTIFICATIONS PAGE
   // ======================================================
-  //
-  // Registration form ke sabhi fields ka default data.
-  //
-  // ======================================================
+  const [applicationFees, setApplicationFees] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("");
 
+  // ======================================================
+  // FORM DATA
+  // ======================================================
   const initialFormData = {
-
     applyFor: "",
-
     applicantName: "",
-
     fatherName: "",
-
     motherName: "",
-
     dob: "",
-
     gender: "",
-
     caste: "",
-
     mobile: "",
-
     aadhar: "",
-
     email: "",
-
     country: "India",
-
     state: "",
-
     city: "",
-
     address: "",
-
     pinCode: "",
-
     qualification: "",
-
   };
 
+  const [formData, setFormData] = useState(initialFormData);
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [registeredData, setRegisteredData] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   // ======================================================
-  // FORM DATA STATE
+  // LOAD FEES + DEPARTMENT (strong + reliable)
   // ======================================================
-
-  const [
-    formData,
-    setFormData,
-  ] = useState(initialFormData);
-
-
-  // ======================================================
-  // ERROR STATE
-  // ======================================================
-
-  const [
-    errors,
-    setErrors,
-  ] = useState({});
-
-
-  // ======================================================
-  // REGISTERED CANDIDATE STATE
-  // ======================================================
-
-  const [
-    registeredData,
-    setRegisteredData,
-  ] = useState(null);
-
-
-  // ======================================================
-  // HANDLE INPUT CHANGE
-  // ======================================================
-  //
-  // Form input ke andar value change hone par
-  // ye function call hota hai.
-  //
-  // ======================================================
-
-  const handleChange = (e) => {
-
-
-    const {
-      name,
-      value,
-    } = e.target;
-
-
-    // --------------------------------------------------
-    // Mobile aur Aadhaar me sirf numbers allow
-    // --------------------------------------------------
-
-    if (
-
-      name === "mobile" ||
-
-      name === "aadhar" ||
-
-      name === "pinCode"
-
-    ) {
-
-
-      const onlyNumbers =
-        value.replace(/\D/g, "");
-
-
-      setFormData(
-
-        (previousData) => ({
-
-          ...previousData,
-
-          [name]: onlyNumbers,
-
-        })
-
-      );
-
-
-    } else {
-
-
-      // --------------------------------------------------
-      // Normal input value update
-      // --------------------------------------------------
-
-      setFormData(
-
-        (previousData) => ({
-
-          ...previousData,
-
-          [name]: value,
-
-        })
-
-      );
-
-    }
-
-
-    // --------------------------------------------------
-    // Field ka error remove
-    // --------------------------------------------------
-
-    setErrors(
-
-      (previousErrors) => ({
-
-        ...previousErrors,
-
-        [name]: "",
-
-      })
-
-    );
-
-  };
-
-
-  // ======================================================
-  // VALIDATE FORM
-  // ======================================================
-  //
-  // Form ke required fields aur formats check karta hai.
-  //
-  // ======================================================
-
-  const validateForm = () => {
-
-
-    const newErrors = {};
-
-
-    // --------------------------------------------------
-    // Required fields check
-    // --------------------------------------------------
-
-    Object.keys(formData).forEach(
-
-      (field) => {
-
-
-        // Country ko required validation se exclude
-        // kiya gaya hai kyunki default India hai.
-
-        if (
-
-          field !== "country" &&
-
-          !String(formData[field]).trim()
-
-        ) {
-
-
-          newErrors[field] = "Required";
-
+  const loadApplicationFees = () => {
+    try {
+      const params = new URLSearchParams(location.search || window.location.search);
+
+      const feeFromUrl = params.get("fees");
+      const departmentFromUrl = params.get("department");
+      const notificationId =
+        params.get("notificationId") ||
+        localStorage.getItem("selectedNotificationId");
+
+      const storedFees = localStorage.getItem("selectedApplicationFees");
+      const storedDepartment = localStorage.getItem("selectedDepartment");
+      const storedApplyFor = localStorage.getItem("selectedApplyFor");
+
+      let finalFees = feeFromUrl || storedFees || "";
+      let finalDepartment = departmentFromUrl || storedDepartment || "";
+      let finalApplyFor = departmentFromUrl || storedApplyFor || storedDepartment || "";
+
+      // 1. Try to find exact vacancy by notificationId
+      const vacancies =
+        JSON.parse(localStorage.getItem("vani_vacancies")) || [];
+
+      if (notificationId && vacancies.length > 0) {
+        const selectedVacancy = vacancies.find(
+          (item) => String(item.id) === String(notificationId)
+        );
+
+        if (selectedVacancy) {
+          if (
+            selectedVacancy.fees !== undefined &&
+            selectedVacancy.fees !== null &&
+            String(selectedVacancy.fees).trim() !== ""
+          ) {
+            finalFees = selectedVacancy.fees;
+          }
+          if (selectedVacancy.department) {
+            finalDepartment = selectedVacancy.department;
+            finalApplyFor = selectedVacancy.department;
+          }
         }
-
       }
 
-    );
+      // 2. Fallback → last uploaded vacancy (most recent)
+      if (
+        (!finalFees || String(finalFees).trim() === "") &&
+        vacancies.length > 0
+      ) {
+        const latest = vacancies[vacancies.length - 1];
+        if (latest && latest.fees !== undefined && latest.fees !== null) {
+          finalFees = latest.fees;
+          if (latest.department) {
+            finalDepartment = latest.department;
+            finalApplyFor = latest.department;
+          }
+          localStorage.setItem("selectedApplicationFees", String(latest.fees));
+          if (latest.id) {
+            localStorage.setItem("selectedNotificationId", String(latest.id));
+          }
+        }
+      }
 
+      // 3. Set the fees
+      if (finalFees !== null && finalFees !== undefined && String(finalFees).trim() !== "") {
+        setApplicationFees(String(finalFees).trim());
+        localStorage.setItem("selectedApplicationFees", String(finalFees).trim());
+      }
 
-    // --------------------------------------------------
-    // Mobile Number Validation
-    // --------------------------------------------------
+      if (finalDepartment) {
+        setSelectedDepartment(finalDepartment);
+      }
 
-    if (
-
-      formData.mobile &&
-
-      !/^[0-9]{10}$/.test(
-
-        formData.mobile
-
-      )
-
-    ) {
-
-
-      newErrors.mobile =
-        "Enter valid 10 digit mobile number";
-
+      // Pre-fill Apply For field so user does not need to select
+      if (finalApplyFor) {
+        setFormData((prev) => ({
+          ...prev,
+          applyFor: finalApplyFor,
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to load application fees:", error);
     }
-
-
-    // --------------------------------------------------
-    // Aadhaar Number Validation
-    // --------------------------------------------------
-
-    if (
-
-      formData.aadhar &&
-
-      !/^[0-9]{12}$/.test(
-
-        formData.aadhar
-
-      )
-
-    ) {
-
-
-      newErrors.aadhar =
-        "Enter valid 12 digit Aadhaar number";
-
-    }
-
-
-    // --------------------------------------------------
-    // Pin Code Validation
-    // --------------------------------------------------
-
-    if (
-
-      formData.pinCode &&
-
-      !/^[0-9]{6}$/.test(
-
-        formData.pinCode
-
-      )
-
-    ) {
-
-
-      newErrors.pinCode =
-        "Enter valid 6 digit Pin Code";
-
-    }
-
-
-    // --------------------------------------------------
-    // Email Validation
-    // --------------------------------------------------
-
-    if (
-
-      formData.email &&
-
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-
-        formData.email
-
-      )
-
-    ) {
-
-
-      newErrors.email =
-        "Enter valid email address";
-
-    }
-
-
-    // --------------------------------------------------
-    // Error State Update
-    // --------------------------------------------------
-
-    setErrors(newErrors);
-
-
-    // --------------------------------------------------
-    // Validation Result
-    // --------------------------------------------------
-
-    return (
-
-      Object.keys(newErrors).length === 0
-
-    );
-
   };
 
+  // Run on mount + when URL changes
+  useEffect(() => {
+    loadApplicationFees();
+  }, [location.search]);
+
+  // Also keep checking (for same-tab updates from Admin)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadApplicationFees();
+    }, 1500);
+
+    window.addEventListener("storage", loadApplicationFees);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", loadApplicationFees);
+    };
+  }, []);
+
+  // ======================================================
+  // HANDLE INPUT
+  // ======================================================
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    let newValue = value;
+
+    if (name === "mobile" || name === "aadhar" || name === "pinCode") {
+      newValue = value.replace(/\D/g, "");
+    }
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]: newValue,
+    }));
+
+    setErrors((previous) => ({
+      ...previous,
+      [name]: "",
+    }));
+  };
+
+  // ======================================================
+  // VALIDATE
+  // ======================================================
+  const validateForm = () => {
+    const newErrors = {};
+
+    Object.keys(formData).forEach((field) => {
+      if (field !== "country" && !String(formData[field]).trim()) {
+        newErrors[field] = "Required";
+      }
+    });
+
+    if (formData.mobile && !/^[0-9]{10}$/.test(formData.mobile)) {
+      newErrors.mobile = "Enter valid 10 digit mobile number";
+    }
+
+    if (formData.aadhar && !/^[0-9]{12}$/.test(formData.aadhar)) {
+      newErrors.aadhar = "Enter valid 12 digit Aadhaar number";
+    }
+
+    if (formData.pinCode && !/^[0-9]{6}$/.test(formData.pinCode)) {
+      newErrors.pinCode = "Enter valid 6 digit Pin Code";
+    }
+
+    if (
+      formData.email &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+    ) {
+      newErrors.email = "Enter valid email address";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // ======================================================
   // GENERATE REGISTRATION NUMBER
   // ======================================================
-  //
-  // Har candidate ke liye unique registration number
-  // generate karta hai.
-  //
-  // Format:
-  //
-  // DCPU/2026/0001
-  //
-  // ======================================================
-
   const generateRegistrationNumber = () => {
-
-
-    // --------------------------------------------------
-    // Current Year
-    // --------------------------------------------------
-
-    const currentYear =
-      new Date().getFullYear();
-
-
-    // --------------------------------------------------
-    // LocalStorage se last registration number
-    // --------------------------------------------------
-
-    const lastNumber =
-      Number(
-
-        localStorage.getItem(
-
-          "lastCandidateRegistrationNumber"
-
-        )
-
-      ) || 0;
-
-
-    // --------------------------------------------------
-    // Next Number
-    // --------------------------------------------------
-
-    const nextNumber =
-      lastNumber + 1;
-
-
-    // --------------------------------------------------
-    // Next Number ko LocalStorage me save
-    // --------------------------------------------------
-
-    localStorage.setItem(
-
-      "lastCandidateRegistrationNumber",
-
-      String(nextNumber)
-
-    );
-
-
-    // --------------------------------------------------
-    // 4 Digit Number Format
-    // --------------------------------------------------
-
-    const paddedNumber =
-      String(nextNumber).padStart(
-
-        4,
-
-        "0"
-
-      );
-
-
-    // --------------------------------------------------
-    // Final Registration Number
-    // --------------------------------------------------
-
-    return `DCPU/${currentYear}/${paddedNumber}`;
-
+    let number;
+    do {
+      number = `VSPL${Math.floor(10000 + Math.random() * 90000)}`;
+    } while (localStorage.getItem(`registration_${number}`));
+    return number;
   };
-
 
   // ======================================================
   // GENERATE CANDIDATE ID
   // ======================================================
-  //
-  // Candidate ke liye unique ID generate karta hai.
-  //
-  // ======================================================
-
   const generateCandidateId = () => {
-
-
-    return (
-
-      `CAND-${Date.now()}`
-
-    );
-
+    return `CAND-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   };
 
-
   // ======================================================
-  // SAVE REGISTRATION
+  // SUBMIT REGISTRATION
   // ======================================================
-  //
-  // Form submit hone par candidate data save karta hai.
-  //
-  // ======================================================
-
   const handleSubmit = async (e) => {
-
-
-    // --------------------------------------------------
-    // Browser ka default submit stop
-    // --------------------------------------------------
-
     e.preventDefault();
 
+    if (loading) return;
 
-    // --------------------------------------------------
-    // Form Validation
-    // --------------------------------------------------
-
-    const isValid =
-      validateForm();
-
-
-    if (!isValid) {
-
-
-      alert(
-
-        "Please fill all required fields correctly."
-
-      );
-
-
+    if (!validateForm()) {
+      alert("Please fill all required fields correctly.");
       return;
-
     }
 
+    if (!applicationFees || applicationFees === "") {
+      alert(
+        "Application fees not available. Please go to Notifications page and click Apply."
+      );
+      return;
+    }
 
-    // ==================================================
-    // REGISTRATION NUMBER GENERATE
-    // ==================================================
-
-    const registrationNumber =
-      generateRegistrationNumber();
-
-
-    // ==================================================
-    // CANDIDATE ID GENERATE
-    // ==================================================
-
-    const candidateId =
-      generateCandidateId();
-
-
-    // ==================================================
-    // COMPLETE CANDIDATE DATA
-    // ==================================================
+    const registrationNumber = generateRegistrationNumber();
+    const candidateId = generateCandidateId();
 
     const candidateData = {
-
-
-      // --------------------------------------------------
-      // Existing Form Data
-      // --------------------------------------------------
-
       ...formData,
-
-
-      // --------------------------------------------------
-      // Unique Candidate ID
-      // --------------------------------------------------
-
       id: candidateId,
-
-      candidateId: candidateId,
-
-
-      // --------------------------------------------------
-      // Registration Number
-      // --------------------------------------------------
-
-      registrationNumber:
-
-        registrationNumber,
-
-
-      // Compatibility ke liye registrationNo bhi
-      // same registration number rakha gaya hai.
-
-      registrationNo:
-
-        registrationNumber,
-
-
-      // --------------------------------------------------
-      // Payment Status
-      // --------------------------------------------------
-
+      candidateId,
+      registrationNumber,
+      registrationNo: registrationNumber,
+      fees: applicationFees,
+      amount: applicationFees,
+      paymentAmount: applicationFees,
       paymentStatus: "Pending",
-
-
-      // --------------------------------------------------
-      // Candidate Status
-      // --------------------------------------------------
-
       status: "Registered",
-
-
-      // --------------------------------------------------
-      // Registration Date
-      // --------------------------------------------------
-
-      registrationDate:
-
-        new Date().toISOString(),
-
+      registrationDate: new Date().toISOString(),
+      department: selectedDepartment || formData.applyFor || "",
     };
 
-
-    // ==================================================
-    // CONTEXT ME SAVE
-    // ==================================================
-
-    let savedCandidate;
-
     try {
-      savedCandidate = await addCandidate(candidateData);
+      setLoading(true);
+
+      const savedCandidate = await addCandidate(candidateData);
+      const serverCandidate = savedCandidate || candidateData;
+
+      const finalRegistrationNumber =
+        serverCandidate.registrationNumber ||
+        serverCandidate.registrationNo ||
+        registrationNumber;
+
+      const finalAmount =
+        serverCandidate.fees ??
+        serverCandidate.amount ??
+        serverCandidate.paymentAmount ??
+        applicationFees;
+
+      const completeCandidate = {
+        ...serverCandidate,
+        registrationNumber: finalRegistrationNumber,
+        registrationNo: finalRegistrationNumber,
+        fees: String(finalAmount),
+        amount: String(finalAmount),
+        paymentAmount: String(finalAmount),
+        paymentStatus: serverCandidate.paymentStatus || "Pending",
+        status: serverCandidate.status || "Registered",
+      };
+
+      localStorage.setItem(
+        `registration_${finalRegistrationNumber}`,
+        JSON.stringify(completeCandidate)
+      );
+      localStorage.setItem("lastRegistrationNumber", finalRegistrationNumber);
+      localStorage.setItem("paymentRegistrationNumber", finalRegistrationNumber);
+      localStorage.setItem("paymentAmount", String(finalAmount));
+      localStorage.setItem("selectedApplicationFees", String(finalAmount));
+
+      setRegisteredData(completeCandidate);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       console.error("Candidate registration failed:", error);
-      alert(error.message || "Failed to submit registration.");
+      alert(error?.message || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ======================================================
+  // RESET
+  // ======================================================
+  const handleReset = () => {
+    setFormData(initialFormData);
+    setErrors({});
+    setRegisteredData(null);
+    setCopied(false);
+  };
+
+  // ======================================================
+  // COPY REGISTRATION NUMBER
+  // ======================================================
+  const handleCopy = async () => {
+    const number =
+      registeredData?.registrationNumber ||
+      registeredData?.registrationNo;
+
+    if (!number) return;
+
+    try {
+      await navigator.clipboard.writeText(number);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      const textarea = document.createElement("textarea");
+      textarea.value = number;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  // ======================================================
+  // OPEN PAYMENT
+  // ======================================================
+  const handlePayFees = () => {
+    if (!registeredData) return;
+
+    const registrationNumber =
+      registeredData.registrationNumber ||
+      registeredData.registrationNo;
+
+    const amount =
+      registeredData.fees ||
+      registeredData.amount ||
+      registeredData.paymentAmount ||
+      applicationFees;
+
+    if (!registrationNumber) {
+      alert("Registration number not found.");
       return;
     }
 
+    localStorage.setItem("paymentRegistrationNumber", registrationNumber);
+    localStorage.setItem("paymentAmount", String(amount));
 
-    // ==================================================
-    // REGISTERED DATA SHOW
-    // ==================================================
-
-    setRegisteredData(
-
-      savedCandidate || candidateData
-
+    navigate(
+      `/fee-payment?registrationNumber=${encodeURIComponent(
+        registrationNumber
+      )}&amount=${encodeURIComponent(amount)}`
     );
-
-
-    // ==================================================
-    // PAGE TOP PAR SCROLL
-    // ==================================================
-
-    window.scrollTo({
-
-      top: 0,
-
-      behavior: "smooth",
-
-    });
-
   };
 
-
   // ======================================================
-  // RESET FORM
+  // PRINT
   // ======================================================
-  //
-  // Form ko completely reset karta hai.
-  //
-  // ======================================================
-
-  const handleReset = () => {
-
-
-    setFormData(
-
-      initialFormData
-
-    );
-
-
-    setErrors({});
-
-
-    setRegisteredData(null);
-
-  };
-
-
-  // ======================================================
-  // PRINT FUNCTION
-  // ======================================================
-  //
-  // Candidate registration details ko print karta hai.
-  //
-  // ======================================================
-
   const handlePrint = () => {
-
-
     window.print();
-
   };
 
-
   // ======================================================
-  // INPUT CLASS FUNCTION
+  // SUCCESS PAGE
   // ======================================================
-  //
-  // Error hone par input me is-invalid class add karta hai.
-  //
-  // ======================================================
-
-  const inputClass = (field) => {
-
-
-    return `form-control ${errors[field]
-
-        ? "is-invalid"
-
-        : ""
-
-      }`;
-
-  };
-
-
-  // ======================================================
-  // COMPONENT UI
-  // ======================================================
-
-  return (
-
-
-    <div className="online-registration-page">
-
-
-      {/* ==================================================
-          ONLINE REGISTRATION FORM
-      ================================================== */}
-
-      {!registeredData && (
-
-
-        <div className="container-fluid px-4 py-3">
-
-
-          <h1 className="registration-title">
-
-            Online Registration Form
-
-          </h1>
-
-
-          <p className="department-text">
-
-            <strong>Department:</strong>{" "}
-
-            Child Helpline Unit at District Child
-            Protection Unit (DCPU)-Lakhimpur(Khiri)
-
-          </p>
-
-
-          {/* ==================================================
-              REGISTRATION FORM
-          ================================================== */}
-
-          <form
-
-            onSubmit={handleSubmit}
-
-          >
-
-
-            {/* ==================================================
-                APPLY FOR
-            ================================================== */}
-
-            <div className="row mb-3">
-
-
-              <div className="col-lg-6 col-md-8 col-12">
-
-
-                <label className="form-label">
-
-
-                  <strong>
-
-                    Apply For:
-
-                  </strong>
-
-
-                </label>
-
-
-                <select
-
-                  name="applyFor"
-
-                  value={formData.applyFor}
-
-                  onChange={handleChange}
-
-                  className={inputClass(
-
-                    "applyFor"
-
-                  )}
-
-                >
-
-
-                  <option value="">
-
-                    ---Select Apply For Post---
-
-                  </option>
-
-
-                  <option value="Case Worker">
-
-                    Case Worker
-
-                  </option>
-
-
-                  <option value="Child Helpline">
-
-                    Child Helpline
-
-                  </option>
-
-
-                  <option value="Counsellor">
-
-                    Counsellor
-
-                  </option>
-
-
-                  <option value="Social Worker">
-
-                    Social Worker
-
-                  </option>
-
-
-                </select>
-
-
-                {errors.applyFor && (
-
-
-                  <small className="text-danger">
-
-                    {errors.applyFor}
-
-                  </small>
-
-                )}
-
-
-              </div>
-
-
-            </div>
-
-
-            {/* ==================================================
-                ROW 1
-            ================================================== */}
-
-            <div className="row g-4 mb-3">
-
-
-              <FormField
-
-                label="Applicant Name*"
-
-                name="applicantName"
-
-                placeholder="Applicant Name*"
-
-                value={formData.applicantName}
-
-                onChange={handleChange}
-
-                error={errors.applicantName}
-
-              />
-
-
-              <FormField
-
-                label="Father Name*"
-
-                name="fatherName"
-
-                placeholder="Father Name*"
-
-                value={formData.fatherName}
-
-                onChange={handleChange}
-
-                error={errors.fatherName}
-
-              />
-
-
-              <FormField
-
-                label="Mother Name*"
-
-                name="motherName"
-
-                placeholder="Mother Name*"
-
-                value={formData.motherName}
-
-                onChange={handleChange}
-
-                error={errors.motherName}
-
-              />
-
-
-            </div>
-
-
-            {/* ==================================================
-                ROW 2
-            ================================================== */}
-
-            <div className="row g-4 mb-4">
-
-
-              <FormField
-
-                label="DOB(dd/MM/yyyy)*"
-
-                name="dob"
-
-                type="date"
-
-                value={formData.dob}
-
-                onChange={handleChange}
-
-                error={errors.dob}
-
-              />
-
-
-              <SelectField
-
-                label="Gender*"
-
-                name="gender"
-
-                value={formData.gender}
-
-                onChange={handleChange}
-
-                error={errors.gender}
-
-                options={[
-
-                  "Male",
-
-                  "Female",
-
-                  "Other",
-
-                ]}
-
-              />
-
-
-              <SelectField
-
-                label="Caste*"
-
-                name="caste"
-
-                value={formData.caste}
-
-                onChange={handleChange}
-
-                error={errors.caste}
-
-                options={[
-
-                  "General",
-
-                  "OBC",
-
-                  "SC",
-
-                  "ST",
-
-                ]}
-
-              />
-
-
-            </div>
-
-
-            {/* ==================================================
-                ROW 3
-            ================================================== */}
-
-            <div className="row g-4 mb-4">
-
-
-              <FormField
-
-                label="Mobile No.*"
-
-                name="mobile"
-
-                placeholder="Mobile No.*"
-
-                value={formData.mobile}
-
-                onChange={handleChange}
-
-                error={errors.mobile}
-
-                maxLength="10"
-
-              />
-
-
-              <FormField
-
-                label="Aadhar No.*"
-
-                name="aadhar"
-
-                placeholder="Aadhar"
-
-                value={formData.aadhar}
-
-                onChange={handleChange}
-
-                error={errors.aadhar}
-
-                maxLength="12"
-
-              />
-
-
-              <FormField
-
-                label="Email Id*"
-
-                name="email"
-
-                type="email"
-
-                placeholder="Email Id*"
-
-                value={formData.email}
-
-                onChange={handleChange}
-
-                error={errors.email}
-
-              />
-
-
-            </div>
-
-
-            {/* ==================================================
-                ROW 4
-            ================================================== */}
-
-            <div className="row g-4 mb-4">
-
-
-              <div className="col-lg-4 col-md-6 col-12">
-
-
-                <label className="form-label">
-
-
-                  <strong>
-
-                    Country:*
-
-                  </strong>
-
-
-                </label>
-
-
-                <select
-
-                  name="country"
-
-                  value={formData.country}
-
-                  onChange={handleChange}
-
-                  className="form-control"
-
-                >
-
-
-                  <option value="India">
-
-                    India
-
-                  </option>
-
-
-                </select>
-
-
-              </div>
-
-
-              <SelectField
-
-                label="State:*"
-
-                name="state"
-
-                value={formData.state}
-
-                onChange={handleChange}
-
-                error={errors.state}
-
-                options={[
-
-                  "Uttar Pradesh",
-
-                  "Madhya Pradesh",
-
-                  "Rajasthan",
-
-                  "Bihar",
-
-                  "Delhi",
-
-                ]}
-
-                placeholder="-----Select State-----"
-
-              />
-
-
-              <SelectField
-
-                label="City:*"
-
-                name="city"
-
-                value={formData.city}
-
-                onChange={handleChange}
-
-                error={errors.city}
-
-                options={[
-
-                  "Lakhimpur Kheri",
-
-                  "Lucknow",
-
-                  "Kanpur",
-
-                  "Varanasi",
-
-                  "Agra",
-
-                ]}
-
-              />
-
-
-            </div>
-
-
-            {/* ==================================================
-                ROW 5
-            ================================================== */}
-
-            <div className="row g-4 mb-4">
-
-
-              <div className="col-lg-4 col-md-6 col-12">
-
-
-                <label className="form-label">
-
-
-                  <strong>
-
-                    Address:*
-
-                  </strong>
-
-
-                </label>
-
-
-                <textarea
-
-                  name="address"
-
-                  placeholder="Address*"
-
-                  value={formData.address}
-
-                  onChange={handleChange}
-
-                  className={inputClass(
-
-                    "address"
-
-                  )}
-
-                  rows="2"
-
-                />
-
-
-                {errors.address && (
-
-
-                  <small className="text-danger">
-
-                    {errors.address}
-
-                  </small>
-
-                )}
-
-
-              </div>
-
-
-              <FormField
-
-                label="Pin Code*"
-
-                name="pinCode"
-
-                placeholder="Pin Code*"
-
-                value={formData.pinCode}
-
-                onChange={handleChange}
-
-                error={errors.pinCode}
-
-                maxLength="6"
-
-              />
-
-
-              <FormField
-
-                label="Highest Qualification*"
-
-                name="qualification"
-
-                placeholder="Highest Qualification*"
-
-                value={formData.qualification}
-
-                onChange={handleChange}
-
-                error={errors.qualification}
-
-              />
-
-
-            </div>
-
-
-            {/* ==================================================
-                FORM BUTTONS
-            ================================================== */}
-
-            <div className="d-flex justify-content-center gap-5">
-
-
+  if (registeredData) {
+    const registrationNumber =
+      registeredData.registrationNumber ||
+      registeredData.registrationNo;
+
+    const amount =
+      registeredData.fees ||
+      registeredData.amount ||
+      registeredData.paymentAmount;
+
+    return (
+      <section className="candidate-details-page">
+        <div className="container">
+          <h1>Candidate Registration Details</h1>
+
+          <div className="alert alert-success">
+            Registration completed successfully.
+          </div>
+
+          <div className="registration-box">
+            <h5>Registration Number</h5>
+            <div className="registration-number">
+              {registrationNumber}
               <button
-
-                type="submit"
-
-                className="btn btn-light border px-3 py-1"
-
-              >
-
-                Save
-
-              </button>
-
-
-              <button
-
                 type="button"
-
-                onClick={handleReset}
-
-                className="btn btn-light border px-3 py-1"
-
+                className="btn btn-sm btn-outline-secondary ms-3"
+                onClick={handleCopy}
               >
-
-                Reset
-
+                {copied ? "Copied!" : "Copy"}
               </button>
-
-
             </div>
+          </div>
 
+          <div className="details-card">
+            <div className="row">
+              <Detail label="Applicant Name" value={registeredData.applicantName} />
+              <Detail label="Father Name" value={registeredData.fatherName} />
+              <Detail label="Mother Name" value={registeredData.motherName} />
+              <Detail label="DOB" value={registeredData.dob} />
+              <Detail label="Gender" value={registeredData.gender} />
+              <Detail label="Caste" value={registeredData.caste} />
+              <Detail label="Mobile" value={registeredData.mobile} />
+              <Detail label="Aadhar" value={registeredData.aadhar} />
+              <Detail label="Email" value={registeredData.email} />
+              <Detail label="Country" value={registeredData.country} />
+              <Detail label="State" value={registeredData.state} />
+              <Detail label="City" value={registeredData.city} />
+              <Detail label="Address" value={registeredData.address} />
+              <Detail label="Pin Code" value={registeredData.pinCode} />
+              <Detail label="Qualification" value={registeredData.qualification} />
+              <Detail label="Apply For" value={registeredData.applyFor || registeredData.department} />
+            </div>
+          </div>
 
-          </form>
+          <div className="payment-box">
+            <h5>Application Fees</h5>
+            <div className="fee-amount">₹{amount}</div>
+            <p>
+              Registration Number: <strong>{registrationNumber}</strong>
+            </p>
+            <p>
+              Payment Status:{" "}
+              <strong className="text-warning">Pending</strong>
+            </p>
+            <button
+              type="button"
+              className="btn btn-success btn-lg"
+              onClick={handlePayFees}
+            >
+              Pay Fees ₹{amount}
+            </button>
+          </div>
 
-
+          <div className="mt-4 d-flex gap-2">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handlePrint}
+            >
+              Print Registration
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleReset}
+            >
+              New Registration
+            </button>
+          </div>
         </div>
 
-      )}
+        <style>{`
+          .candidate-details-page {
+            min-height: 600px;
+            padding: 40px 20px;
+            background: #fff;
+          }
+          .registration-box {
+            margin-top: 25px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background: #f8f9fa;
+          }
+          .registration-number {
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #0d2744;
+          }
+          .details-card {
+            margin-top: 20px;
+            padding: 25px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+          }
+          .payment-box {
+            margin-top: 25px;
+            padding: 25px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+          }
+          .fee-amount {
+            font-size: 30px;
+            font-weight: 700;
+            margin: 10px 0 15px;
+            color: #198754;
+          }
+          @media print {
+            body * { visibility: hidden; }
+            .candidate-details-page,
+            .candidate-details-page * { visibility: visible; }
+            .candidate-details-page {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+            }
+            button { display: none !important; }
+          }
+        `}</style>
+      </section>
+    );
+  }
 
+  // ======================================================
+  // REGISTRATION FORM
+  // ======================================================
+  return (
+    <section className="online-registration-page">
+      <div className="container-fluid px-4 py-4">
+        <h1 className="registration-title">Online Registration Form</h1>
 
-      {/* ==================================================
-          CANDIDATE DETAILS
-      ================================================== */}
+        <p>
+          <strong>Department:</strong>{" "}
+          {selectedDepartment
+            ? selectedDepartment
+            : "Child Helpline Unit at District Child Protection Unit (DCPU)-Lakhimpur(Khiri)"}
+        </p>
 
-      {registeredData && (
+        {/* ==================================================
+            APPLICATION FEES BOX
+        ================================================== */}
+        <div className="alert alert-info d-flex justify-content-between align-items-center flex-wrap">
+          <div>
+            <strong>Application Fees:</strong>{" "}
+            {applicationFees ? (
+              <span className="fw-bold text-success fs-5">
+                ₹{applicationFees}
+              </span>
+            ) : (
+              <span className="text-danger">
+                Not Available – Please click Apply from Notifications page
+              </span>
+            )}
+          </div>
+          <small>
+            Fees admin ke Notifications page se automatically aayi hai.
+          </small>
+        </div>
 
+        <form onSubmit={handleSubmit}>
+          {/* APPLY FOR – pre-filled when coming from Apply button */}
+          <div className="row mb-4">
+            <div className="col-lg-4 col-md-6 col-12">
+              <label className="form-label">
+                <strong>Apply For:*</strong>
+              </label>
+              <select
+                name="applyFor"
+                value={formData.applyFor}
+                onChange={handleChange}
+                className={`form-control ${errors.applyFor ? "is-invalid" : ""}`}
+              >
+                <option value="">---Select Apply For Post---</option>
+                
+                {/* Also show the exact department name if it came from vacancy */}
+                {selectedDepartment &&
+                  ![
+                    "Case Worker",
+                    "Child Helpline",
+                    "Counsellor",
+                    "Social Worker",
+                  ].includes(selectedDepartment) && (
+                    <option value={selectedDepartment}>
+                      {selectedDepartment}
+                    </option>
+                  )}
+              </select>
+              {errors.applyFor && (
+                <small className="text-danger">{errors.applyFor}</small>
+              )}
+              {formData.applyFor && (
+                <small className="text-success d-block mt-1">
+                  Selected Post: {formData.applyFor}
+                </small>
+              )}
+            </div>
+          </div>
 
-        <CandidateDetails
+          {/* ROW 1 */}
+          <div className="row g-4 mb-4">
+            <FormField
+              label="Applicant Name*"
+              name="applicantName"
+              placeholder="Applicant Name*"
+              value={formData.applicantName}
+              onChange={handleChange}
+              error={errors.applicantName}
+            />
+            <FormField
+              label="Father Name*"
+              name="fatherName"
+              placeholder="Father Name*"
+              value={formData.fatherName}
+              onChange={handleChange}
+              error={errors.fatherName}
+            />
+            <FormField
+              label="Mother Name*"
+              name="motherName"
+              placeholder="Mother Name*"
+              value={formData.motherName}
+              onChange={handleChange}
+              error={errors.motherName}
+            />
+          </div>
 
-          candidate={registeredData}
+          {/* ROW 2 */}
+          <div className="row g-4 mb-4">
+            <FormField
+              label="DOB(dd/MM/yyyy)*"
+              name="dob"
+              type="date"
+              value={formData.dob}
+              onChange={handleChange}
+              error={errors.dob}
+            />
+            <SelectField
+              label="Gender*"
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+              error={errors.gender}
+              options={["Male", "Female", "Other"]}
+            />
+            <SelectField
+              label="Caste*"
+              name="caste"
+              value={formData.caste}
+              onChange={handleChange}
+              error={errors.caste}
+              options={["General", "OBC", "SC", "ST"]}
+            />
+          </div>
 
-          onPrint={handlePrint}
+          {/* ROW 3 */}
+          <div className="row g-4 mb-4">
+            <FormField
+              label="Mobile No.*"
+              name="mobile"
+              placeholder="Mobile No.*"
+              value={formData.mobile}
+              onChange={handleChange}
+              error={errors.mobile}
+              maxLength="10"
+            />
+            <FormField
+              label="Aadhar No.*"
+              name="aadhar"
+              placeholder="Aadhar No.*"
+              value={formData.aadhar}
+              onChange={handleChange}
+              error={errors.aadhar}
+              maxLength="12"
+            />
+            <FormField
+              label="Email Id*"
+              name="email"
+              type="email"
+              placeholder="Email Id*"
+              value={formData.email}
+              onChange={handleChange}
+              error={errors.email}
+            />
+          </div>
 
-        />
+          {/* ROW 4 */}
+          <div className="row g-4 mb-4">
+            <div className="col-lg-4 col-md-6 col-12">
+              <label className="form-label">
+                <strong>Country:*</strong>
+              </label>
+              <select
+                name="country"
+                value={formData.country}
+                onChange={handleChange}
+                className="form-control"
+              >
+                <option value="India">India</option>
+              </select>
+            </div>
 
-      )}
+            <SelectField
+              label="State:*"
+              name="state"
+              value={formData.state}
+              onChange={handleChange}
+              error={errors.state}
+              placeholder="-----Select State-----"
+             options={[
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Delhi",
+]}
+            />
 
+            <SelectField
+              label="City:*"
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              error={errors.city}
+             options={[
+  "Agra",
+  "Aligarh",
+  "Ambedkar Nagar",
+  "Amethi",
+  "Amroha",
+  "Auraiya",
+  "Ayodhya",
+  "Azamgarh",
+  "Baghpat",
+  "Bahraich",
+  "Ballia",
+  "Balrampur",
+  "Banda",
+  "Barabanki",
+  "Bareilly",
+  "Basti",
+  "Bhadohi",
+  "Bijnor",
+  "Budaun",
+  "Bulandshahr",
+  "Chandauli",
+  "Chitrakoot",
+  "Deoria",
+  "Etah",
+  "Etawah",
+  "Farrukhabad",
+  "Fatehpur",
+  "Firozabad",
+  "Gautam Buddha Nagar",
+  "Ghaziabad",
+  "Ghazipur",
+  "Gonda",
+  "Gorakhpur",
+  "Hamirpur",
+  "Hapur",
+  "Hardoi",
+  "Hathras",
+  "Jalaun",
+  "Jaunpur",
+  "Jhansi",
+  "Kannauj",
+  "Kanpur Dehat",
+  "Kanpur Nagar",
+  "Kasganj",
+  "Kaushambi",
+  "Kheri",
+  "Kushinagar",
+  "Lakhimpur Kheri",
+  "Lalitpur",
+  "Lucknow",
+  "Maharajganj",
+  "Mahoba",
+  "Mainpuri",
+  "Mathura",
+  "Mau",
+  "Meerut",
+  "Mirzapur",
+  "Moradabad",
+  "Muzaffarnagar",
+  "Pilibhit",
+  "Pratapgarh",
+  "Prayagraj",
+  "Raebareli",
+  "Rampur",
+  "Saharanpur",
+  "Sambhal",
+  "Sant Kabir Nagar",
+  "Shahjahanpur",
+  "Shamli",
+  "Shravasti",
+  "Siddharthnagar",
+  "Sitapur",
+  "Sonbhadra",
+  "Sultanpur",
+  "Unnao",
+  "Varanasi"
+]}
+            />
+          </div>
 
-      {/* ==================================================
-          RESPONSIVE CSS
-      ================================================== */}
+          {/* ROW 5 */}
+          <div className="row g-4 mb-4">
+            <div className="col-lg-4 col-md-6 col-12">
+              <label className="form-label">
+                <strong>Address:*</strong>
+              </label>
+              <textarea
+                name="address"
+                placeholder="Address*"
+                value={formData.address}
+                onChange={handleChange}
+                rows="2"
+                className={`form-control ${errors.address ? "is-invalid" : ""}`}
+              />
+              {errors.address && (
+                <small className="text-danger">{errors.address}</small>
+              )}
+            </div>
+
+            <FormField
+              label="Pin Code*"
+              name="pinCode"
+              placeholder="Pin Code*"
+              value={formData.pinCode}
+              onChange={handleChange}
+              error={errors.pinCode}
+              maxLength="6"
+            />
+
+            <FormField
+              label="Highest Qualification*"
+              name="qualification"
+              placeholder="Highest Qualification*"
+              value={formData.qualification}
+              onChange={handleChange}
+              error={errors.qualification}
+            />
+          </div>
+
+          {/* ==================================================
+              FEES PAYABLE (BOTTOM)
+          ================================================== */}
+          <div className="alert alert-warning">
+            <strong>Fees Payable:</strong>{" "}
+            {applicationFees ? (
+              <span className="fw-bold text-success fs-5">
+                ₹{applicationFees}
+              </span>
+            ) : (
+              <span className="text-danger">Not Available</span>
+            )}
+          </div>
+
+          {/* BUTTONS */}
+          <div className="d-flex justify-content-center gap-4">
+            <button
+              type="submit"
+              className="btn btn-primary px-5"
+              disabled={loading || !applicationFees}
+            >
+              {loading ? "Submitting..." : "Submit Registration"}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-light border px-5"
+              onClick={handleReset}
+              disabled={loading}
+            >
+              Reset
+            </button>
+          </div>
+        </form>
+      </div>
 
       <style>{`
-
-
         .online-registration-page {
-
           width: 100%;
-
-          color: #111;
-
-          font-family: Arial, sans-serif;
-
+          background: #fff;
+          min-height: 600px;
         }
-
-
         .registration-title {
-
           font-size: 24px;
-
           font-weight: 400;
-
           margin-bottom: 8px;
-
         }
-
-
-        .department-text {
-
-          font-size: 13px;
-
-        }
-
-
         .form-label {
-
           font-size: 13px;
-
           margin-bottom: 6px;
-
         }
-
-
         .form-control {
-
           font-size: 13px;
-
         }
-
-
-        .candidate-details-page {
-
-          min-height: 530px;
-
-          padding: 16px 42px 20px;
-
-          border-top: 3px solid #18334c;
-
-        }
-
-
-        .candidate-title {
-
-          font-size: 24px;
-
-          font-weight: 400;
-
-          margin: 0 0 8px;
-
-        }
-
-
-        .candidate-details-page p {
-
-          font-size: 13px;
-
-          margin-bottom: 18px;
-
-          line-height: 1.5;
-
-        }
-
-
-        .candidate-id {
-
-          margin-top: 22px;
-
-        }
-
-
-        .registration-number {
-
-          margin-top: 18px;
-
-        }
-
-
-        .registration-code {
-
-          background: #d6d6d6;
-
-          padding: 2px 4px;
-
-          font-weight: bold;
-
-        }
-
-
-        .candidate-grid {
-
-          margin-top: 25px;
-
-        }
-
-
-        .candidate-buttons {
-
-          display: flex;
-
-          justify-content: center;
-
-          gap: 3px;
-
-          margin-top: 20px;
-
-        }
-
-
-        @media (max-width: 768px) {
-
-
-          .candidate-details-page {
-
-            padding: 16px;
-
-          }
-
-
-          .candidate-title {
-
-            font-size: 22px;
-
-          }
-
-
-        }
-
-
         @media print {
-
-
-          body * {
-
-            visibility: hidden;
-
-          }
-
-
-          .candidate-details-page,
-
-          .candidate-details-page * {
-
-            visibility: visible;
-
-          }
-
-
-          .candidate-details-page {
-
-            position: absolute;
-
-            left: 0;
-
-            top: 0;
-
-            width: 100%;
-
-            border-top: none;
-
-            padding: 20px 42px;
-
-          }
-
-
-          .candidate-buttons {
-
+          .online-registration-page {
             display: none;
-
           }
-
-
         }
-
-
       `}</style>
-
-
-    </div>
-
+    </section>
   );
-
 };
 
-
 // ======================================================
-// CANDIDATE DETAILS COMPONENT
+// FORM FIELD
 // ======================================================
-//
-// Registration ke baad candidate ka complete data show karta hai.
-//
-// ======================================================
-
-const CandidateDetails = ({
-
-  candidate,
-
-  onPrint,
-
-}) => {
-
-
-  // ==================================================
-  // SAFE REGISTRATION NUMBER
-  // ==================================================
-
-  const registrationNumber =
-
-    candidate.registrationNumber ||
-
-    candidate.registrationNo ||
-
-    "Not Generated";
-
-
-  return (
-
-
-    <div className="candidate-details-page">
-
-
-      <h1 className="candidate-title">
-
-        Candidate Registration Details
-
-      </h1>
-
-
-      <p>
-
-        <strong>Fees:-</strong>{" "}
-
-        118.00
-
-      </p>
-
-
-      <p className="candidate-id">
-
-
-        <strong>ID:-</strong>{" "}
-
-
-        {candidate.id ||
-
-          candidate.candidateId ||
-
-          "Not Available"}
-
-
-      </p>
-
-
-      <p className="registration-number">
-
-
-        <strong>
-
-          Registration No.:
-
-        </strong>{" "}
-
-
-        <span className="registration-code">
-
-
-          {registrationNumber}
-
-
-        </span>
-
-
-      </p>
-
-
-      <p>
-
-
-        <strong>Department:</strong>{" "}
-
-
-        Child Helpline Unit at District Child
-
-        Protection Unit (DCPU)-Lakhimpur(Khiri)
-
-
-      </p>
-
-
-      <p>
-
-
-        <strong>Apply For:</strong>{" "}
-
-
-        {candidate.applyFor}
-
-
-      </p>
-
-
-      <div className="row candidate-grid">
-
-
-        <Detail
-
-          label="Applicant Name"
-
-          value={candidate.applicantName}
-
-        />
-
-
-        <Detail
-
-          label="Father Name"
-
-          value={candidate.fatherName}
-
-        />
-
-
-        <Detail
-
-          label="Mother Name"
-
-          value={candidate.motherName}
-
-        />
-
-
-        <Detail
-
-          label="DOB(dd/MM/yyyy)"
-
-          value={candidate.dob}
-
-        />
-
-
-        <Detail
-
-          label="Gender"
-
-          value={candidate.gender}
-
-        />
-
-
-        <Detail
-
-          label="Caste"
-
-          value={candidate.caste}
-
-        />
-
-
-        <Detail
-
-          label="Mobile No."
-
-          value={candidate.mobile}
-
-        />
-
-
-        <Detail
-
-          label="Aadhar No."
-
-          value={candidate.aadhar}
-
-        />
-
-
-        <Detail
-
-          label="Email Id"
-
-          value={candidate.email}
-
-        />
-
-
-        <Detail
-
-          label="Country"
-
-          value={candidate.country}
-
-        />
-
-
-        <Detail
-
-          label="State"
-
-          value={candidate.state}
-
-        />
-
-
-        <Detail
-
-          label="City"
-
-          value={candidate.city}
-
-        />
-
-
-        <Detail
-
-          label="Address"
-
-          value={candidate.address}
-
-        />
-
-
-        <Detail
-
-          label="Pin Code"
-
-          value={candidate.pinCode}
-
-        />
-
-
-        <Detail
-
-          label="Highest Qualification"
-
-          value={candidate.qualification}
-
-        />
-
-
-      </div>
-
-
-      <p>
-
-
-        <strong>
-
-          Payment Status:
-
-        </strong>{" "}
-
-
-        {candidate.paymentStatus || "Pending"}
-
-
-      </p>
-
-
-      <div className="candidate-buttons">
-
-
-        <button
-
-          type="button"
-
-          className="btn btn-primary btn-sm"
-
-          onClick={onPrint}
-
-        >
-
-
-          Print
-
-
-        </button>
-
-
-      </div>
-
-
-    </div>
-
-  );
-
-};
-
-
-// ======================================================
-// FORM FIELD COMPONENT
-// ======================================================
-//
-// Reusable input field component.
-//
-// ======================================================
-
 const FormField = ({
-
   label,
-
   name,
-
   type = "text",
-
   placeholder,
-
   value,
-
   onChange,
-
   error,
-
   maxLength,
-
 }) => {
-
-
   return (
-
-
     <div className="col-lg-4 col-md-6 col-12">
-
-
       <label className="form-label">
-
-
-        <strong>
-
-          {label}
-
-        </strong>
-
-
+        <strong>{label}</strong>
       </label>
-
-
       <input
-
         type={type}
-
         name={name}
-
         placeholder={placeholder}
-
         value={value}
-
         onChange={onChange}
-
         maxLength={maxLength}
-
-        className={`form-control ${error
-
-            ? "is-invalid"
-
-            : ""
-
-          }`}
-
+        className={`form-control ${error ? "is-invalid" : ""}`}
       />
-
-
-      {error && (
-
-
-        <small className="text-danger">
-
-
-          {error}
-
-
-        </small>
-
-
-      )}
-
-
+      {error && <small className="text-danger">{error}</small>}
     </div>
-
   );
-
 };
 
-
 // ======================================================
-// SELECT FIELD COMPONENT
+// SELECT FIELD
 // ======================================================
-//
-// Reusable select dropdown component.
-//
-// ======================================================
-
 const SelectField = ({
-
   label,
-
   name,
-
   value,
-
   onChange,
-
   error,
-
   options,
-
   placeholder = "--Select--",
-
 }) => {
-
-
   return (
-
-
     <div className="col-lg-4 col-md-6 col-12">
-
-
       <label className="form-label">
-
-
-        <strong>
-
-          {label}
-
-        </strong>
-
-
+        <strong>{label}</strong>
       </label>
-
-
       <select
-
         name={name}
-
         value={value}
-
         onChange={onChange}
-
-        className={`form-control ${error
-
-            ? "is-invalid"
-
-            : ""
-
-          }`}
-
+        className={`form-control ${error ? "is-invalid" : ""}`}
       >
-
-
-        <option value="">
-
-
-          {placeholder}
-
-
-        </option>
-
-
+        <option value="">{placeholder}</option>
         {options.map((option) => (
-
-
-          <option
-
-            key={option}
-
-            value={option}
-
-          >
-
-
+          <option key={option} value={option}>
             {option}
-
-
           </option>
-
-
         ))}
-
-
       </select>
-
-
-      {error && (
-
-
-        <small className="text-danger">
-
-
-          {error}
-
-
-        </small>
-
-
-      )}
-
-
+      {error && <small className="text-danger">{error}</small>}
     </div>
-
   );
-
 };
 
-
 // ======================================================
-// DETAIL COMPONENT
+// DETAIL
 // ======================================================
-//
-// Candidate details ke liye reusable component.
-//
-// ======================================================
-
-const Detail = ({
-
-  label,
-
-  value,
-
-}) => {
-
-
+const Detail = ({ label, value }) => {
   return (
-
-
-    <div className="col-lg-4 col-md-6 col-12">
-
-
-      <p>
-
-
-        <strong>
-
-          {label}:
-
-        </strong>{" "}
-
-
-        {value || "N/A"}
-
-
-      </p>
-
-
+    <div className="col-lg-4 col-md-6 col-12 mb-3">
+      <strong>{label}:</strong> <span>{value || "N/A"}</span>
     </div>
-
   );
-
 };
-
-
-// ======================================================
-// EXPORT COMPONENT
-// ======================================================
 
 export default OnlineRegistration;
